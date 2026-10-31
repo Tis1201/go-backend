@@ -15,6 +15,11 @@ Current step: **Step 0, Foundation, milestone 0.1**. The roadmap and lessons are
 Update this section as the owner progresses.
 
 - Go: about one week of experience (as of 2026-10). Has written few tests.
+- Background: backend with NestJS (TypeScript). Little Docker experience and wants to
+  learn it. When useful, explain a Go concept by comparing it to its NestJS equivalent.
+- Guidance fades over time. Milestone 0.1 uses fully worked examples that the owner types
+  by hand. Milestone 0.2 gives skeletons with `TODO`s. From milestone 0.3 on, give hints
+  only unless the owner asks for more.
 - Introduce at most one or two new Go concepts per milestone. The first time a Go idiom
   appears (error handling, interfaces, goroutines, channels, `context`), explain it and
   link the matching chapter of *Learn Go with Tests*, *Go by Example* or the Go docs.

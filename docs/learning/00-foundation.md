@@ -37,6 +37,7 @@ dễ; ở công ty thật cũng nên làm như vậy. DoD 9 (`gofmt`, `go vet`) 
 
 ### Chặng 0.1: Server đầu tiên và test đầu tiên
 
+- **Hướng dẫn từng bước:** [`00-1-walkthrough.md`](00-1-walkthrough.md).
 - **Làm:** chạy Postgres bằng Docker Compose (code Go chưa cần kết nối DB). Chạy
   `go mod init`, viết `main.go` với `http.Server` có timeout, endpoint `GET /healthz` trả
   JSON `{"status":"ok"}`, và một test cho `/healthz`. Tạm hard-code địa chỉ `:8080` cũng
