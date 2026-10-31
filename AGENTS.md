@@ -17,6 +17,8 @@ Update this section as the owner progresses.
 - Go: about one week of experience (as of 2026-10). Has written few tests.
 - Background: backend with NestJS (TypeScript). Little Docker experience and wants to
   learn it. When useful, explain a Go concept by comparing it to its NestJS equivalent.
+- Tools: GoLand on macOS, GitHub Desktop for commits and pushes. Local Postgres runs on
+  host port 5433 because 5432 is already taken on this machine.
 - Guidance fades over time. Milestone 0.1 uses fully worked examples that the owner types
   by hand. Milestone 0.2 gives skeletons with `TODO`s. From milestone 0.3 on, give hints
   only unless the owner asks for more.
@@ -151,8 +153,11 @@ Planned targets, added as the steps arrive:
 
 ## Git
 
+- The owner uses GitHub Desktop and commits directly to `main` (solo project). Do not ask
+  for feature branches or PRs; revisit this when CI arrives in Step 9. Review the owner's
+  work from the commits on `main`.
 - Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
-- One branch and one small PR per task.
+- Keep commits small: one logical change per commit.
 
 ## Decisions
 
