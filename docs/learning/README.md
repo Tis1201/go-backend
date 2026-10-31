@@ -89,7 +89,7 @@ bằng lời của mình.
 - Chuẩn hóa dữ liệu, ràng buộc (`PRIMARY KEY`, `FOREIGN KEY`, `UNIQUE`, `CHECK`, `NOT NULL`).
   Dùng database làm lớp bảo vệ cuối cùng.
 - Kiểu dữ liệu cho tiền: vì sao không dùng `float`.
-- Migrations: chọn công cụ và viết **ADR đầu tiên**.
+- Migrations với `goose`: viết **ADR đầu tiên** ghi lại vì sao chọn goose thay vì golang-migrate hay Atlas.
 - `sqlc`: viết SQL thật, sinh code Go type-safe. Không dùng ORM, và hiểu vì sao.
 - Seed data để dev.
 

@@ -339,7 +339,7 @@ checkout commit nào thì `go test ./...` cũng phải xanh.
 7. `chore: add Makefile` (nhớ cập nhật mục Commands trong `AGENTS.md`)
 8. `docs: add README with local setup`
 
-Makefile tối thiểu có các target `db-up`, `db-down`, `run`, `test`, `lint`
+Makefile tối thiểu có các target `up`, `down`, `run`, `test`, `lint`
 (`lint` = `gofmt -l` + `go vet`).
 
 ---
