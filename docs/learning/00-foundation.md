@@ -1,7 +1,7 @@
 # Bước 0: Nền móng
 
-> Thời lượng gợi ý: 3 đến 5 buổi. Đừng vội. Bước này ít dòng code nhưng chứa rất
-> nhiều chi tiết mà junior hay bỏ qua, còn senior thì nhìn ra ngay khi review.
+> Thời lượng gợi ý: 1 đến 2 tuần, chia làm 3 chặng. Đừng vội. Bước này ít dòng code
+> nhưng chứa rất nhiều chi tiết mà junior hay bỏ qua, còn senior thì nhìn ra ngay khi review.
 
 ## Mục tiêu học
 
@@ -28,6 +28,48 @@ Xong bước này, bạn tự giải thích được:
    **khi không có Postgres**.
 9. `go vet ./...` sạch, code đã qua `gofmt`.
 10. Người khác clone repo về, làm theo README là chạy được.
+
+## Chia thành 3 chặng
+
+Bạn mới dùng Go khoảng một tuần, nên bước 0 được chia thành 3 chặng. Mỗi chặng chỉ thêm
+một hai khái niệm Go mới, và mỗi chặng là **một PR riêng**. PR nhỏ thì review nhanh, sửa
+dễ; ở công ty thật cũng nên làm như vậy. DoD 9 (`gofmt`, `go vet`) áp dụng cho mọi chặng.
+
+### Chặng 0.1: Server đầu tiên và test đầu tiên
+
+- **Làm:** chạy Postgres bằng Docker Compose (code Go chưa cần kết nối DB). Chạy
+  `go mod init`, viết `main.go` với `http.Server` có timeout, endpoint `GET /healthz` trả
+  JSON `{"status":"ok"}`, và một test cho `/healthz`. Tạm hard-code địa chỉ `:8080` cũng
+  được, chặng 0.2 sẽ đưa nó vào config. Hard-code tạm là chuyện bình thường, miễn là bạn
+  biết sau này sẽ thay ở đâu.
+- **Khái niệm Go mới:** package và module, handler của `net/http`, `encoding/json`,
+  `testing` với `httptest`.
+- **Đọc:** mục 1.1, 1.2, 1.3, 1.6, 1.11. [Tour of Go](https://go.dev/tour) phần Basics.
+  [*Learn Go with Tests*](https://quii.gitbook.io/learn-go-with-tests): các chương
+  Hello, World; Integers; Iteration.
+- **Xong khi:** đạt DoD 1, 3; trả lời câu hỏi 5, 8.
+- **Branch:** `step-0/1-server`
+
+### Chặng 0.2: Config, pool DB và readiness
+
+- **Làm:** đọc config từ biến môi trường, tạo `pgxpool`, endpoint `GET /readyz`, chuyển
+  log sang `slog`, viết table-driven test cho `/readyz` với pinger giả.
+- **Khái niệm Go mới:** xử lý lỗi (`if err != nil`, wrap bằng `%w`), interface,
+  `context.WithTimeout`, `defer`.
+- **Đọc:** mục 1.4, 1.5, 1.7, 1.9, 1.10. *Learn Go with Tests*: Structs, methods &
+  interfaces; Pointers & errors; Dependency Injection.
+- **Xong khi:** đạt DoD 4, 5, 7, 8; trả lời câu hỏi 2, 3 (trước khi code) và 4, 7
+  (sau khi code).
+- **Branch:** `step-0/2-readiness`
+
+### Chặng 0.3: Graceful shutdown
+
+- **Làm:** tắt server đúng cách khi nhận SIGINT hoặc SIGTERM, viết Makefile và README.
+- **Khái niệm Go mới:** goroutine, channel, `select`, bắt signal.
+- **Đọc:** mục 1.8. *Learn Go with Tests*: Concurrency, Select, Context.
+  [*Go by Example*](https://gobyexample.com): Goroutines, Channels, Select, Signals.
+- **Xong khi:** đạt DoD 2, 6, 10; trả lời câu hỏi 1 (trước khi code) và 6 (sau khi code).
+- **Branch:** `step-0/3-shutdown`
 
 ---
 
@@ -184,6 +226,58 @@ trước khi request kịp chạy xong, tức là đúng điều mà graceful sh
   chuỗi. Khi đó bạn lọc và tìm log theo từng field được.
 - Logger cũng là một dependency: tạo trong `main`, rồi truyền vào nơi cần.
 
+### 1.11 Test trong Go, bắt đầu từ con số 0
+
+Go có sẵn công cụ test, không cần thư viện ngoài.
+
+- Test nằm trong file có đuôi `_test.go`, đặt cạnh file code và cùng package.
+- Mỗi test là một hàm `func TestXxx(t *testing.T)`. Chạy tất cả bằng `go test ./...`,
+  thêm `-v` để xem từng test, thêm `-run TestTen` để chỉ chạy một test.
+- `t.Errorf` báo lỗi nhưng **chạy tiếp**. `t.Fatalf` báo lỗi rồi **dừng** test đó. Dùng
+  `Fatalf` khi các bước sau không còn ý nghĩa, ví dụ không decode được JSON thì kiểm tra
+  từng field cũng vô ích.
+- Một test thường có 3 phần: chuẩn bị (arrange), thực hiện (act), kiểm tra (assert).
+
+**Test một handler** không cần chạy server thật:
+
+1. Tạo request giả: `httptest.NewRequest(http.MethodGet, "/healthz", nil)`.
+2. Tạo đối tượng ghi lại response: `httptest.NewRecorder()`.
+3. Gọi thẳng `ServeHTTP(rec, req)`. Nếu gọi qua router (`mux`) thay vì gọi handler,
+   bạn test luôn được cả việc đăng ký route và method.
+4. Kiểm tra `rec.Code` và `rec.Body`.
+
+**Table-driven test:** khi có nhiều trường hợp cùng dạng, gom chúng vào một bảng. Ví dụ
+với một hàm không liên quan đến dự án:
+
+```go
+func TestAbs(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		want int
+	}{
+		{name: "positive", in: 3, want: 3},
+		{name: "negative", in: -3, want: 3},
+		{name: "zero", in: 0, want: 0},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := Abs(tc.in); got != tc.want {
+				t.Errorf("Abs(%d) = %d, want %d", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+```
+
+Muốn thêm trường hợp mới thì chỉ cần thêm một dòng vào bảng. Thông báo lỗi theo mẫu
+"got X, want Y" là quy ước của cộng đồng Go.
+
+**Thói quen quan trọng nhất: phải thấy test fail ít nhất một lần.** Viết test xong, cố
+tình làm sai code (ví dụ trả `500` thay vì `200`) rồi chạy lại. Nếu test vẫn xanh thì nó
+không kiểm tra gì cả. Một test chưa từng đỏ là một test chưa được kiểm chứng.
+
 ---
 
 ## Phần 2: Câu hỏi
@@ -192,44 +286,57 @@ Viết câu trả lời vào mô tả PR, mỗi câu 3 đến 5 câu. Câu nào 
 "mình đoán là... vì...". Một phỏng đoán có lý do vẫn tốt hơn bỏ trống. Senior review cả
 cách bạn suy nghĩ, không chỉ review code.
 
+Số thứ tự câu hỏi cố định. Mục "Chia thành 3 chặng" ghi rõ câu nào thuộc chặng nào.
+
 ### Trả lời trước khi code
 
-1. Liệt kê theo thứ tự những việc `main()` làm, từ lúc khởi động đến lúc thoát. Chỉ cần
-   gạch đầu dòng, chưa cần code.
-2. Postgres chết 30 giây. Bạn có 10 pod API, và `livenessProbe` của Kubernetes trỏ vào
+1. **(Chặng 0.3)** Liệt kê theo thứ tự những việc `main()` làm, từ lúc khởi động đến lúc
+   thoát. Chỉ cần gạch đầu dòng, chưa cần code.
+2. **(Chặng 0.2)** Postgres chết 30 giây. Bạn có 10 pod API, và `livenessProbe` của Kubernetes trỏ vào
    một endpoint **có ping DB**. Mô tả chuyện gì xảy ra theo từng giai đoạn. Nếu thay bằng
    `readinessProbe` thì sao?
-3. App có nên ping DB ngay lúc khởi động không? Nêu một lý do để làm, một lý do để không
-   làm, rồi chọn.
+3. **(Chặng 0.2)** App có nên ping DB ngay lúc khởi động không? Nêu một lý do để làm,
+   một lý do để không làm, rồi chọn.
 
 ### Trả lời bằng thực nghiệm (sau khi code)
 
-4. Gọi `pgxpool.New` với `DATABASE_URL` trỏ tới một DB đang tắt. Nó có trả lỗi không?
+4. **(Chặng 0.2)** Gọi `pgxpool.New` với `DATABASE_URL` trỏ tới một DB đang tắt. Nó có trả lỗi không?
    Bạn kiểm chứng bằng cách nào?
-5. Chạy `nc localhost 8080` rồi không gõ gì. Kết nối được giữ bao lâu trước và sau khi
-   bạn đặt `ReadHeaderTimeout`?
-6. Tạo tạm một endpoint ngủ 5 giây, gọi nó, rồi nhấn Ctrl+C ngay. Request có trả về thành
-   công không? Nếu bỏ đoạn code chờ `Shutdown` chạy xong thì chuyện gì xảy ra?
-7. Vì sao interface `Pinger` nằm ở package `httpapi` chứ không nằm ở package tạo pool?
-8. Chuyện gì xảy ra nếu một module khác `import ".../backend/internal/config"`?
+5. **(Chặng 0.1)** Chạy `nc localhost 8080` rồi không gõ gì. Kết nối được giữ bao lâu
+   trước và sau khi bạn đặt `ReadHeaderTimeout`?
+6. **(Chặng 0.3)** Tạo tạm một endpoint ngủ 5 giây, gọi nó, rồi nhấn Ctrl+C ngay. Request
+   có trả về thành công không? Nếu bỏ đoạn code chờ `Shutdown` chạy xong thì chuyện gì
+   xảy ra?
+7. **(Chặng 0.2)** Vì sao interface `Pinger` nằm ở package `httpapi` chứ không nằm ở
+   package tạo pool?
+8. **(Chặng 0.1)** Chuyện gì xảy ra nếu một module khác import một package nằm trong
+   `backend/internal/`?
 
 ---
 
 ## Phần 3: Bài tập, chia theo commit
 
-Làm trên branch `step-0/foundation`. Mỗi commit làm một việc, message theo Conventional
-Commits:
+Mỗi chặng là một branch và một PR. Mỗi commit làm một việc, message theo Conventional
+Commits. Test đi chung commit với code mà nó kiểm tra: mỗi commit phải tự đứng được,
+checkout commit nào thì `go test ./...` cũng phải xanh.
+
+**Chặng 0.1** (`step-0/1-server`)
 
 1. `chore: add gitignore and env example`
 2. `chore(db): add postgres via docker compose`
 3. `feat(api): bootstrap http server with liveness endpoint`
-   (`go mod init`, `main`, `http.Server` có timeout, `/healthz`)
+   (`go mod init`, `main`, `http.Server` có timeout, `/healthz` và test của nó)
+
+**Chặng 0.2** (`step-0/2-readiness`)
+
 4. `feat(api): load config from environment`
-5. `feat(api): add database pool and readiness endpoint`
+5. `feat(api): add database pool and readiness endpoint` (kèm test với pinger giả)
+
+**Chặng 0.3** (`step-0/3-shutdown`)
+
 6. `feat(api): shut down gracefully on SIGINT and SIGTERM`
-7. `test(api): cover readiness handler`
-8. `chore: add Makefile` (nhớ cập nhật mục Commands trong `AGENTS.md`)
-9. `docs: add README with local setup`
+7. `chore: add Makefile` (nhớ cập nhật mục Commands trong `AGENTS.md`)
+8. `docs: add README with local setup`
 
 Makefile tối thiểu có các target `db-up`, `db-down`, `run`, `test`, `lint`
 (`lint` = `gofmt -l` + `go vet`).
@@ -359,6 +466,8 @@ khác là để app tự đọc `.env`, nhưng hãy cân nhắc: app có nên ph
 
 ## Phần 5: Checklist tự review trước khi mở PR
 
+Mục nào thuộc chặng sau thì để dành đến chặng đó.
+
 - [ ] `gofmt -l .` không in ra gì, `go vet ./...` sạch.
 - [ ] `go test ./...` pass, kể cả khi Postgres đang **tắt**.
 - [ ] Không có biến global cho pool, logger hay config.
@@ -384,6 +493,8 @@ khác là để app tự đọc `.env`, nhưng hãy cân nhắc: app có nên ph
 
 ## Đọc thêm
 
+- [Tour of Go](https://go.dev/tour), [*Learn Go with Tests*](https://quii.gitbook.io/learn-go-with-tests),
+  [*Go by Example*](https://gobyexample.com). Ba nguồn này đi kèm suốt bước 0.
 - Go docs: package `net/http` (`Server`, routing pattern của `ServeMux`), `os/signal`,
   `log/slog`, `net/http/httptest`.
 - Cloudflare blog: *The complete guide to Go net/http timeouts*.

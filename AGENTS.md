@@ -7,7 +7,19 @@ learning Go and growing toward full-stack engineering. **The primary goal is
 learning; a working product is the secondary goal.** When the two conflict,
 choose the option that teaches more.
 
-Current step: **Step 0, Foundation**. The roadmap and lessons are in `docs/learning/`.
+Current step: **Step 0, Foundation, milestone 0.1**. The roadmap and lessons are in
+`docs/learning/`.
+
+## Learner profile
+
+Update this section as the owner progresses.
+
+- Go: about one week of experience (as of 2026-10). Has written few tests.
+- Introduce at most one or two new Go concepts per milestone. The first time a Go idiom
+  appears (error handling, interfaces, goroutines, channels, `context`), explain it and
+  link the matching chapter of *Learn Go with Tests*, *Go by Example* or the Go docs.
+- Teach testing from the basics. Expect every PR to include tests, and ask the owner to
+  show each new test failing at least once.
 
 ## Learning mode (default, read this first)
 
