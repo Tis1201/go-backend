@@ -1,0 +1,13 @@
+# Local environment files hold secrets; .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# IDE and OS files
+.idea/
+.DS_Store
+
+# Go build and test output
+bin/
+*.test
+*.out
