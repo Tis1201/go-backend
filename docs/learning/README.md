@@ -75,6 +75,9 @@ bằng lời của mình.
 | 9 | Vận hành production | Hệ thống lỗi lúc 2 giờ sáng thì bạn biết bằng cách nào, và tìm nguyên nhân ra sao? |
 | + | AI trong sản phẩm | AI giúp gì cho người mua sách, và tốn bao nhiêu tiền? |
 
+**Bài phụ (sau chặng 0.2):** [Gin](gin.md). Viết lại `/healthz` và `/readyz` bằng Gin
+trong `playground/gin/`, so sánh với stdlib, rồi quyết định bằng ADR 0001.
+
 ### Bước 0: Nền móng
 
 - **Backend:** layout monorepo, Go modules, `internal/`, config theo 12-factor, `pgxpool`,

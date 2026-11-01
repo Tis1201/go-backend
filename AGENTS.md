@@ -7,7 +7,8 @@ junior backend engineer learning Go and growing toward full-stack engineering. *
 primary goal is skill growth, not shipping speed.** When the two conflict, choose the
 option that teaches more.
 
-Current step: **Step 0, Foundation, milestone 0.1**. The roadmap and lessons are in
+Current step: **side lesson on Gin** (`docs/learning/gin.md`, in `playground/gin/`), taken
+after milestone 0.2. Next: Step 0, milestone 0.3. The roadmap and lessons are in
 `docs/learning/`.
 
 ## Learner profile
@@ -67,6 +68,8 @@ Decided:
   migrations with `goose`, logging with `log/slog`.
 - Frontend: Next.js (App Router), TypeScript in strict mode.
 - Local environment: Docker Compose. CI: GitHub Actions.
+- `playground/` holds learning experiments (currently Gin) for comparison. The app in
+  `backend/` stays on the standard library unless an ADR in `docs/adr/` decides otherwise.
 
 Not decided yet. Do not choose these on the owner's behalf; lay out the trade-offs when
 the relevant step arrives, record the decision in an ADR, then update this file: styling
@@ -87,6 +90,7 @@ backend/
   migrations/           goose migrations (from Step 1)
   queries/              SQL files for sqlc (from Step 1)
 frontend/               Next.js app (from Step 3)
+playground/             learning experiments, one Go module each (gin/); not part of the app
 deploy/                 production infrastructure (from Step 9)
 docs/
   adr/                  Architecture Decision Records
