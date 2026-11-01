@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +29,7 @@ func TestHealthz(t *testing.T) {
 		},
 	}
 
-	handler := NewHandler()
+	handler := NewHandler(slog.New(slog.DiscardHandler), fakePinger{})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
