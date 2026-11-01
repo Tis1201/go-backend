@@ -170,9 +170,11 @@ Biến môi trường tối thiểu: `DATABASE_URL`, `HTTP_ADDR` (có giá trị
   `WriteTimeout`, `IdleTimeout`. Với mỗi trường, viết một câu giải thích nó đo từ thời
   điểm nào đến thời điểm nào.
 - Routing của Go 1.22+: `mux.HandleFunc("GET /healthz", ...)` khai báo method và path
-  ngay trong pattern. Gọi sai method thì server tự trả `405`. Dự án này không cần
-  chi, gin hay echo. Tự kiểm tra: `curl -i -X POST localhost:8080/healthz` trả về gì,
-  và header `Allow` chứa gì?
+  ngay trong pattern. Gọi sai method thì server tự trả `405`. Tự kiểm tra:
+  `curl -i -X POST localhost:8080/healthz` trả về gì, và header `Allow` chứa gì?
+  (Cập nhật: từ chặng 0.2b dự án chuyển sang Gin, xem [ADR 0001](../adr/0001-use-gin.md).
+  Kiến thức về `http.Server` và timeout ở mục này vẫn áp dụng nguyên vẹn, vì Gin chạy
+  bên trong `http.Server`.)
 
 ### 1.7 Health check: liveness và readiness
 

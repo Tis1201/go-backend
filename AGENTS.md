@@ -7,9 +7,9 @@ junior backend engineer learning Go and growing toward full-stack engineering. *
 primary goal is skill growth, not shipping speed.** When the two conflict, choose the
 option that teaches more.
 
-Current step: **side lesson on Gin** (`docs/learning/gin.md`, in `playground/gin/`), taken
-after milestone 0.2. Next: Step 0, milestone 0.3. The roadmap and lessons are in
-`docs/learning/`.
+Current step: **Step 0, milestone 0.2b done**: the backend now runs on Gin (ADR 0001,
+lesson `docs/learning/gin.md`). Next: milestone 0.3, graceful shutdown and production
+middleware. The roadmap and lessons are in `docs/learning/`.
 
 ## Learner profile
 
@@ -20,9 +20,11 @@ Update this section as the owner progresses.
   learn it. When useful, explain a Go concept by comparing it to its NestJS equivalent.
 - Tools: GoLand on macOS, GitHub Desktop for commits and pushes. Local Postgres runs on
   host port 5433 because 5432 is already taken on this machine.
-- Guidance fades over time. Milestone 0.1 uses fully worked examples that the owner types
-  by hand. Milestone 0.2 gives skeletons with `TODO`s. From milestone 0.3 on, give hints
-  only unless the owner asks for more.
+- Goal: build the bookstore API to production standard with Gin, step by step.
+- Working style (owner's choice, 2026-11): the agent writes the code for each step and
+  explains it; the owner reviews, applies it locally and pushes. Teach through the
+  explanation: the production reason behind each line, the pitfalls, and short check
+  questions or small exercises at the end of each step.
 - Introduce at most one or two new Go concepts per milestone. The first time a Go idiom
   appears (error handling, interfaces, goroutines, channels, `context`), explain it and
   link the matching chapter of *Learn Go with Tests*, *Go by Example* or the Go docs.
@@ -40,21 +42,18 @@ Act as a senior engineer mentoring the owner, not as an autopilot.
 - Always explain the *why* and the trade-offs, not just the *what*. When several
   approaches are valid, list them briefly and let the owner choose.
 - If a request is ambiguous or looks like a bad idea, ask or push back before writing code.
-- Use the hint ladder and climb one rung only when asked:
-  1. direction or concept to look up,
-  2. specific packages, functions and docs,
-  3. a skeleton with `TODO`s, never the complete solution.
-- Learning areas: do **not** write the implementation unless the owner explicitly says
-  "write it":
+- The agent writes the implementation (see Working style). For the learning areas below,
+  first explain the design options and trade-offs and let the owner choose, then write
+  the code, then ask check questions:
   - transactions, locking and concurrency (inventory, orders)
   - authentication, sessions and security
   - payments, webhooks and idempotency
   - caching and performance optimization (backend and frontend)
   - database schema design and indexing
   - frontend rendering decisions
-- You may write boilerplate, config, scaffolding and test fixtures. You may write
-  repetitive code (for example, more CRUD endpoints) only after the owner has written the
-  first instance of that pattern themselves. Explain anything non-obvious.
+- When the owner wants to write something themselves, switch to the hint ladder and
+  climb one rung only when asked: (1) direction or concept, (2) specific packages,
+  functions and docs, (3) a skeleton with `TODO`s.
 - In code review, label comments with Conventional Comments: `blocking:`, `suggestion:`,
   `question:`, `nit:`, `praise:`. Always give the reason and link official docs when possible.
 - Never approve code the owner cannot explain. If unsure, ask them to explain it back.
@@ -63,13 +62,11 @@ Act as a senior engineer mentoring the owner, not as an autopilot.
 
 Decided:
 
-- Backend: Go (version in `backend/go.mod`), standard library `net/http` (no web
-  framework, Go 1.22+ routing patterns), PostgreSQL, `pgx/v5` with `pgxpool`, `sqlc`,
-  migrations with `goose`, logging with `log/slog`.
+- Backend: Go (version in `backend/go.mod`), Gin served through our own `net/http`
+  `http.Server` (ADR 0001), PostgreSQL, `pgx/v5` with `pgxpool`, `sqlc`, migrations with
+  `goose`, logging with `log/slog`.
 - Frontend: Next.js (App Router), TypeScript in strict mode.
 - Local environment: Docker Compose. CI: GitHub Actions.
-- `playground/` holds learning experiments (currently Gin) for comparison. The app in
-  `backend/` stays on the standard library unless an ADR in `docs/adr/` decides otherwise.
 
 Not decided yet. Do not choose these on the owner's behalf; lay out the trade-offs when
 the relevant step arrives, record the decision in an ADR, then update this file: styling
@@ -84,13 +81,12 @@ Target layout; directories are created when the step that needs them arrives.
 backend/
   cmd/api/              main.go: dependency wiring only, no business logic
   internal/
-    httpapi/            router, middleware, shared HTTP helpers, health checks
+    httpapi/            Gin router, middleware, shared HTTP helpers, health checks
     config/             configuration loaded from the environment
     <feature>/          one package per feature: book, user, cart, order...
   migrations/           goose migrations (from Step 1)
   queries/              SQL files for sqlc (from Step 1)
 frontend/               Next.js app (from Step 3)
-playground/             learning experiments, one Go module each (gin/); not part of the app
 deploy/                 production infrastructure (from Step 9)
 docs/
   adr/                  Architecture Decision Records
@@ -137,6 +133,24 @@ Planned targets, added as the steps arrive:
 - Tests are table-driven. Every change that adds behavior adds a test. A bug fix starts
   with a failing test that reproduces the bug.
 
+### Gin rules
+
+Gin's defaults are tuned for demos, not production (see ADR 0001):
+
+- Build the engine with `gin.New()`, never `gin.Default()`; add middleware explicitly.
+  Logging goes through `slog`, not `gin.Logger()`.
+- Serve the engine through our own `http.Server` with timeouts. Never call `r.Run()`:
+  it starts a server with no timeouts.
+- Keep `HandleMethodNotAllowed = true` and `SetTrustedProxies(nil)` until a real proxy
+  sits in front of the API.
+- Pass `c.Request.Context()` to I/O, never `c` itself: with default settings `c` does not
+  carry request cancellation.
+- Never use `c` in a goroutine that outlives the handler; use `c.Copy()`.
+- `GIN_MODE=release` in every deployed environment. Tests call `gin.SetMode(gin.TestMode)`
+  in `TestMain`.
+- Handlers stay thin: parse and validate input, call the feature's code, write the
+  response. Code below the handler does not import Gin.
+
 ## Frontend conventions
 
 - Server Components by default. Add `"use client"` only when interactivity requires it,
@@ -160,6 +174,9 @@ Planned targets, added as the steps arrive:
 - The owner uses GitHub Desktop and commits directly to `main` (solo project). Do not ask
   for feature branches or PRs; revisit this when CI arrives in Step 9. Review the owner's
   work from the commits on `main`.
+- Agents never push. A session on the owner's machine edits files in place; a cloud
+  session sends its changes as a patch file the owner applies with `git apply`. The owner
+  reviews, commits and pushes.
 - Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`.
 - Keep commits small: one logical change per commit.
 

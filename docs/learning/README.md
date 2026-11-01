@@ -75,8 +75,8 @@ bằng lời của mình.
 | 9 | Vận hành production | Hệ thống lỗi lúc 2 giờ sáng thì bạn biết bằng cách nào, và tìm nguyên nhân ra sao? |
 | + | AI trong sản phẩm | AI giúp gì cho người mua sách, và tốn bao nhiêu tiền? |
 
-**Bài phụ (sau chặng 0.2):** [Gin](gin.md). Viết lại `/healthz` và `/readyz` bằng Gin
-trong `playground/gin/`, so sánh với stdlib, rồi quyết định bằng ADR 0001.
+**Chặng 0.2b:** [Chuyển backend sang Gin](gin.md) ([ADR 0001](../adr/0001-use-gin.md)).
+Từ đây mọi bước làm bằng Gin theo chuẩn production, phục vụ qua `http.Server` của ta.
 
 ### Bước 0: Nền móng
 
