@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"log/slog"
+	"mime"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,11 +59,13 @@ func TestHealthz(t *testing.T) {
 				return
 			}
 
-			// Assert: Content-Type
+			// Assert: Content-Type. Compare the media type only, so a valid
+			// parameter such as "; charset=utf-8" does not fail the test.
 			contentType := response.Header().Get("Content-Type")
-			if contentType != "application/json" {
+			mediaType, _, err := mime.ParseMediaType(contentType)
+			if err != nil || mediaType != "application/json" {
 				t.Errorf(
-					"expected application/json, got %s",
+					"expected application/json, got %q",
 					contentType,
 				)
 			}

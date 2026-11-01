@@ -1,11 +1,15 @@
 package httpapi
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type healthResponse struct {
 	Status string `json:"status"`
 }
 
-func handleHealthz(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, healthResponse{Status: "ok"})
+func handleHealthz(c *gin.Context) {
+	c.JSON(http.StatusOK, healthResponse{Status: "ok"})
 }
